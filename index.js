@@ -7,5 +7,5 @@ const port = process.env.PORT;
 app.use("/jwtapi/v1", require("./routes/api"));
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`Task Management App started and listening on port ${port}`);
 });
