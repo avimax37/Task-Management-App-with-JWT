@@ -147,7 +147,7 @@ router.put("/tasks/update/:id", auth, async (req, res) => {
       // if (checkTaskId.rows.length === 0) {
       //   return res.json("Task does not exist!");
       // }
-      const currentTaskStatus = checkTaskId.rows[0].status;
+      const currentTaskStatus = checkTask.rows[0].status;
       if (
         (status === "incomplete" && currentTaskStatus === "completed") ||
         (status === "completed" && currentTaskStatus === "incomplete")
