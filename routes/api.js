@@ -4,10 +4,6 @@ const jwtGenerator = require("../utils/jwtgenerator");
 const auth = require("../middleware/auth");
 const bcrypt = require("bcrypt");
 
-// router.get("/hello", (req, res) => {
-//   res.send("Hello World!");
-// });
-
 //TODO: User Registration
 router.post("/register", async (req, res) => {
   const { username, password } = req.body;
