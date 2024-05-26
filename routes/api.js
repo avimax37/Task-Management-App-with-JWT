@@ -86,37 +86,44 @@ router.get("/tasks", auth, async (req, res) => {
 router.post("/tasks/newtask", auth, async (req, res) => {
   const { title, description, status } = req.body;
   const user_id = req.user.id;
-
-  if (status === "incomplete" || status === "completed") {
-    try {
-      const checkUser = await pool.query("SELECT id FROM users WHERE id=$1", [
+  const client = await pool.connect();
+  try {
+    if (status === "incomplete" || status === "completed") {
+      await client.query("BEGIN");
+      const checkUser = await client.query("SELECT id FROM users WHERE id=$1", [
         user_id,
       ]);
       if (checkUser.rows.length === 0) {
         return res.json("Invalid user id");
       }
-      const checkDuplicateTask = await pool.query(
+      const checkDuplicateTask = await client.query(
         "SELECT id FROM tasks WHERE title=$1 AND user_id=$2",
         [title.trim(), user_id]
       );
       if (checkDuplicateTask.rows.length > 0) {
         return res.json("Task already exists");
       }
-      const newTask = await pool.query(
+      const newTask = await client.query(
         "INSERT INTO tasks(title, description, status, user_id) VALUES ($1,$2,$3,$4) RETURNING id",
         [title, description, status, user_id]
       );
       if (newTask.rows.length > 0) {
         res.json("New task added");
+        await client.query("COMMIT");
       } else {
+        await client.query("ROLLBACK");
         res.json("Error");
       }
-    } catch (error) {
-      console.log(error.message);
-      res.status(500).json("Internal Server Error!");
+    } else {
+      return res.json("Status must be either incomplete or completed");
+      await client.query("ROLLBACK");
     }
-  } else {
-    return res.json("Status must be either incomplete or completed");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.log(error.message);
+    res.status(500).json("Internal Server Error!");
+  } finally {
+    client.release();
   }
 });
 
@@ -137,12 +144,6 @@ router.put("/tasks/update/:id", auth, async (req, res) => {
           "Task does not exist or you do not have permission to update status of this task"
         );
       }
-      // const checkTaskId = await pool.query("SELECT * FROM tasks WHERE id=$1", [
-      //   id,
-      // ]);
-      // if (checkTaskId.rows.length === 0) {
-      //   return res.json("Task does not exist!");
-      // }
       const currentTaskStatus = checkTask.rows[0].status;
       if (
         (status === "incomplete" && currentTaskStatus === "completed") ||
