@@ -133,8 +133,8 @@ router.put("/tasks/update/:id", auth, async (req, res) => {
   const { id } = req.params;
   const user_id = req.user.id;
 
-  if (status === "incomplete" || status === "completed") {
-    try {
+  try {
+    if (status === "incomplete" || status === "completed") {
       const checkTask = await pool.query(
         "SELECT * FROM tasks WHERE id=$1 AND user_id=$2",
         [id, user_id]
@@ -157,12 +157,12 @@ router.put("/tasks/update/:id", auth, async (req, res) => {
       } else {
         return res.json(`Task status is already ${status}!`);
       }
-    } catch (error) {
-      console.log(error.messgae);
-      res.status(500).send("Internal Server Error!");
+    } else {
+      return res.json("Status must be either incomplete or completed");
     }
-  } else {
-    return res.json("Status must be either incomplete or completed");
+  } catch (error) {
+    console.log(error.messgae);
+    res.status(500).send("Internal Server Error!");
   }
 });
 
